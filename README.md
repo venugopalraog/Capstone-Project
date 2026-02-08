@@ -1,23 +1,26 @@
-# Design Pattern Application
+This is a capstone project for a design pattern tutorial app.
 
-Design Pattern Application is part for Capstone in Udacity Android Nanodegree Program.
+## Refactoring to MVI and Jetpack Compose
 
-# Introduction
+This project is currently being refactored to a modern Android architecture using MVI (Model-View-Intent) and Jetpack Compose.
 
-Design Pattern Application provided detailed description of various Design Pattern (Creational, Structural, Functional) allows user to make pattern as favorite or remove from Favorite list.
+### Progress:
 
-Uses Model View Presenter (MVP) architecture to implement this application.
-
-
-# Third Party Library Used
- * com.google.dagger
- * com.google.android.gms:play-services-location
- * org.greenrobot:eventbus
- * org.robolectric
- * org.mockito:mockito
- * com.google.firebase
-
-
-# Features to be added
- * Convert to MVVM - Hilt, Kotlin, Coroutines, ViewModels -- V
- * Convert UI to JetPack Compose -- S
+*   **Gradle Modernization:**
+    *   Updated project-level `build.gradle` to use the latest plugin syntax.
+    *   Updated app-level `build.gradle` with modern dependencies for Jetpack Compose, ViewModel, and Dagger.
+    *   Configured `settings.gradle` to include necessary plugin repositories.
+*   **MVI Architecture Setup:**
+    *   Created `HomeViewModel` to manage UI state and handle user events.
+    *   Defined `HomeState` and `HomeEvent` sealed classes for MVI.
+*   **Dependency Injection:**
+    *   Created `AppModule` to provide `Application` and `ContentResolver` dependencies.
+    *   Created `AppComponent` to provide a `ViewModelFactory`.
+    *   Created `ViewModelModule` and `ViewModelKey` to provide ViewModels.
+    *   Updated `MyApplication` to use the new `AppComponent`.
+*   **UI (Jetpack Compose):**
+    *   Converted `HomeActivity` to a `ComponentActivity` and set up a basic Compose UI.
+    *   Created `HomeScreen`, `NavigationDrawer`, `CategoryList`, and `PatternScreen` composables.
+    *   Implemented navigation between screens using `NavHost`.
+*   **Cleanup:**
+    *   Removed old fragments, presenters, and other unnecessary files.

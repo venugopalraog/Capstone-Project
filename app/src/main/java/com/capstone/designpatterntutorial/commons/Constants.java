@@ -1,7 +1,13 @@
 package com.capstone.designpatterntutorial.commons;
 
+import com.capstone.designpatterntutorial.R;
+
 /**
  * Created by gubbave on 5/8/2017.
+ * Constants
+ * <p>
+ * This class is used to define the constants used in the application
+ * It contains the category names and their corresponding drawable resources
  */
 
 public class Constants {
