@@ -20,10 +20,13 @@ This release marks a significant architectural shift from a traditional Android 
     - `HtmlText.kt`: A composable for rendering HTML text.
     - `CategoryScreen.kt`: A composable for displaying the patterns for a single category.
     - `PatternListItem.kt`: A composable for displaying a single pattern in a list.
+    - `SearchScreen.kt`: A composable for displaying search results.
 - **MVI Architecture:**
     - `HomeViewModel.kt`: A new `ViewModel` that manages the UI state for the `HomeScreen` and handles user events.
     - `HomeState.kt` & `HomeEvent.kt`: Sealed classes that define the possible states and events for the MVI pattern.
     - `FavoritesState.kt`: A sealed class that defines the possible states for the favorites screen.
+    - `RecentsState.kt`: A sealed class that defines the possible states for the recents screen.
+    - `SearchState.kt`: A sealed class that defines the possible states for the search screen.
 - **Dependency Injection (Dagger):**
     - `AppComponent.kt`: A new Dagger component for providing dependencies to the application.
     - `AppModule.kt`: A Dagger module for providing application-level dependencies like `ContentResolver`.
@@ -31,7 +34,7 @@ This release marks a significant architectural shift from a traditional Android 
 - **Kotlin Models:**
     - Converted `Pattern`, `Category`, `MainScreenData`, and `FavoriteScreenData` from Java classes to Kotlin data classes, and made them `Serializable`.
 - **Kotlin Services & Converters:**
-    - Converted `FavoriteDbService` and `MainScreenConverter` to Kotlin.
+    - Converted `FavoriteDbService`, `RecentDbService` and `MainScreenConverter` to Kotlin.
 - **Compatibility:**
     - `IntentCompat.kt`: Added a compatibility function to safely retrieve `Serializable` objects from `Intents` on all Android versions.
 
@@ -53,6 +56,15 @@ This release marks a significant architectural shift from a traditional Android 
     - Updated the `HomeViewModel` to handle adding and removing favorites.
     - Implemented the "Favorites" screen to display the list of favorite patterns.
     - Added a message to the favorites screen when no favorites have been added.
+- **Recents:**
+    - Added a "Recents" item to the navigation drawer.
+    - Updated the `HomeViewModel` to handle adding and loading recent patterns.
+    - Implemented the "Recents" screen to display the list of recently viewed patterns.
+- **Search:**
+    - Added a search icon to the top app bar.
+    - Implemented a search bar that appears when the search icon is clicked.
+    - Updated the `HomeViewModel` to handle searching for patterns.
+    - Implemented a `SearchScreen` to display search results.
 - **Pattern Screen:**
     - The `PatternScreen` now parses and displays HTML content from the pattern summary.
 - **Database:**
@@ -67,6 +79,7 @@ This release marks a significant architectural shift from a traditional Android 
 - **Fixed race condition on favorite:** Resolved a race condition that occurred when quickly tapping the favorite icon by implementing an optimistic update strategy in the `HomeViewModel`.
 - **Fixed database conflict on favorite:** Resolved a database conflict that occurred when inserting a favorite that already existed by using `insertWithOnConflict` in the `DesignPatternProvider`.
 - **Fixed Unresolved reference for icons:** Corrected the icon references in `HomeScreen.kt` by adding the `androidx.compose.material:material-icons-extended` dependency.
+- **Fixed "No such table" error:** Implemented a robust, transaction-based database creation process in `DesignPatternDbHelper` to ensure the database is always created correctly.
 
 ### Removed
 

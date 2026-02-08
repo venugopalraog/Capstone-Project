@@ -10,6 +10,7 @@ import com.capstone.designpatterntutorial.model.converter.MainScreenConverter
 import com.capstone.designpatterntutorial.model.mainscreen.MainScreenData
 import com.capstone.designpatterntutorial.model.mainscreen.Pattern
 import com.capstone.designpatterntutorial.services.FavoriteDbService
+import com.capstone.designpatterntutorial.services.RecentDbService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -27,10 +28,26 @@ sealed class FavoritesState {
     data class Error(val message: String) : FavoritesState()
 }
 
+sealed class RecentsState {
+    object Loading : RecentsState()
+    data class Success(val patterns: List<Pattern>) : RecentsState()
+    data class Error(val message: String) : RecentsState()
+}
+
+sealed class SearchState {
+    object Idle : SearchState()
+    object Loading : SearchState()
+    data class Success(val patterns: List<Pattern>) : SearchState()
+    data class Error(val message: String) : SearchState()
+}
+
 sealed class HomeEvent {
     object LoadPatterns : HomeEvent()
     object LoadFavorites : HomeEvent()
+    object LoadRecents : HomeEvent()
     data class ToggleFavorite(val pattern: Pattern) : HomeEvent()
+    data class AddRecent(val pattern: Pattern) : HomeEvent()
+    data class Search(val query: String) : HomeEvent()
 }
 
 class HomeViewModel @Inject constructor(
@@ -44,6 +61,12 @@ class HomeViewModel @Inject constructor(
     private val _favoritesState = MutableStateFlow<FavoritesState>(FavoritesState.Loading)
     val favoritesState: StateFlow<FavoritesState> = _favoritesState
 
+    private val _recentsState = MutableStateFlow<RecentsState>(RecentsState.Loading)
+    val recentsState: StateFlow<RecentsState> = _recentsState
+
+    private val _searchState = MutableStateFlow<SearchState>(SearchState.Idle)
+    val searchState: StateFlow<SearchState> = _searchState
+
     fun onEvent(event: HomeEvent) {
         when (event) {
             is HomeEvent.LoadPatterns -> {
@@ -54,6 +77,15 @@ class HomeViewModel @Inject constructor(
             }
             is HomeEvent.LoadFavorites -> {
                 loadFavorites()
+            }
+            is HomeEvent.AddRecent -> {
+                addRecent(event.pattern)
+            }
+            is HomeEvent.LoadRecents -> {
+                loadRecents()
+            }
+            is HomeEvent.Search -> {
+                search(event.query)
             }
         }
     }
@@ -94,6 +126,51 @@ class HomeViewModel @Inject constructor(
             putExtra(FavoriteDbService.PATTERN, patternToToggle)
         }
         application.startService(intent)
+    }
+    
+    private fun addRecent(pattern: Pattern) {
+        val intent = Intent(application, RecentDbService::class.java).apply {
+            action = RecentDbService.ACTION_INSERT
+            putExtra(RecentDbService.PATTERN, pattern)
+        }
+        application.startService(intent)
+    }
+
+    private fun search(query: String) {
+        viewModelScope.launch {
+            _searchState.value = SearchState.Loading
+            try {
+                val selection = "${DesignPatternContract.PatternEntry.COLUMN_NAME} LIKE ?"
+                val selectionArgs = arrayOf("%$query%")
+                val cursor = contentResolver.query(
+                    DesignPatternContract.PatternEntry.CONTENT_URI,
+                    null,
+                    selection,
+                    selectionArgs,
+                    null
+                )
+                val patterns = mutableListOf<Pattern>()
+                cursor?.use {
+                    while (it.moveToNext()) {
+                        val name = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_NAME))
+                        patterns.add(
+                            Pattern(
+                                id = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_ID)),
+                                categoryId = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_CATEGORY_ID)),
+                                name = name,
+                                summary = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_DESCRIPTION)),
+                                url = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_INTENT)),
+                                imageName = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_IMAGE_NAME)),
+                                isFavorite = false // We can improve this later
+                            )
+                        )
+                    }
+                }
+                _searchState.value = SearchState.Success(patterns)
+            } catch (e: Exception) {
+                _searchState.value = SearchState.Error(e.message ?: "Unknown error")
+            }
+        }
     }
 
     private fun loadPatterns() {
@@ -168,6 +245,41 @@ class HomeViewModel @Inject constructor(
                 _favoritesState.value = FavoritesState.Success(favorites)
             } catch (e: Exception) {
                 _favoritesState.value = FavoritesState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    private fun loadRecents() {
+        viewModelScope.launch {
+            _recentsState.value = RecentsState.Loading
+            try {
+                val recentCursor = contentResolver.query(
+                    DesignPatternContract.RecentPatternEntry.CONTENT_URI,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+                val recents = mutableListOf<Pattern>()
+                recentCursor?.use {
+                    while (it.moveToNext()) {
+                        val name = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.RecentPatternEntry.COLUMN_NAME))
+                        recents.add(
+                            Pattern(
+                                id = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.RecentPatternEntry.COLUMN_ID)),
+                                categoryId = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.RecentPatternEntry.COLUMN_CATEGORY_ID)),
+                                name = name,
+                                summary = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.RecentPatternEntry.COLUMN_DESCRIPTION)),
+                                url = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.RecentPatternEntry.COLUMN_INTENT)),
+                                imageName = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.RecentPatternEntry.COLUMN_IMAGE_NAME)),
+                                isFavorite = false // We don't know if it's a favorite from this table
+                            )
+                        )
+                    }
+                }
+                _recentsState.value = RecentsState.Success(recents)
+            } catch (e: Exception) {
+                _recentsState.value = RecentsState.Error(e.message ?: "Unknown error")
             }
         }
     }

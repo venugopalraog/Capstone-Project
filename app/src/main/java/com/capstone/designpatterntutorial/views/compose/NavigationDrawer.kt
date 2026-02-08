@@ -9,8 +9,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun NavigationDrawer(onFavoritesClicked: () -> Unit) {
+fun NavigationDrawer(
+    onFavoritesClicked: () -> Unit,
+    onRecentsClicked: () -> Unit
+) {
     Column(modifier = Modifier.padding(16.dp)) {
         Text("Favorites", modifier = Modifier.clickable { onFavoritesClicked() })
+        Text("Recents", modifier = Modifier.padding(top = 16.dp).clickable { onRecentsClicked() })
     }
 }

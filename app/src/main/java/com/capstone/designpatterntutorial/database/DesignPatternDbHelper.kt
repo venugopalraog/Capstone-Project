@@ -19,11 +19,19 @@ class DesignPatternDbHelper(private val context: Context) : SQLiteOpenHelper(con
         try {
             val inputStream = context.resources.openRawResource(R.raw.design_pattern)
             val reader = BufferedReader(InputStreamReader(inputStream))
-            val statements = reader.readText().split(";\n".toRegex()).toTypedArray()
-            for (statement in statements) {
-                if (statement.trim().isNotEmpty()) {
-                    db.execSQL(statement)
+            val sql = reader.readText()
+            val statements = sql.split(";")
+
+            db.beginTransaction()
+            try {
+                for (statement in statements) {
+                    if (statement.trim().isNotEmpty()) {
+                        db.execSQL(statement)
+                    }
                 }
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
             }
         } catch (e: IOException) {
             e.printStackTrace()
@@ -31,6 +39,12 @@ class DesignPatternDbHelper(private val context: Context) : SQLiteOpenHelper(con
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Not needed for this project
+        // To keep things simple for this project, we'll just drop and recreate the table
+        // if the database version changes.
+        db.execSQL("DROP TABLE IF EXISTS ${DesignPatternContract.CategoryEntry.TABLE_NAME}")
+        db.execSQL("DROP TABLE IF EXISTS ${DesignPatternContract.PatternEntry.TABLE_NAME}")
+        db.execSQL("DROP TABLE IF EXISTS ${DesignPatternContract.FavoritePatternEntry.TABLE_NAME}")
+        db.execSQL("DROP TABLE IF EXISTS ${DesignPatternContract.RecentPatternEntry.TABLE_NAME}")
+        onCreate(db)
     }
 }

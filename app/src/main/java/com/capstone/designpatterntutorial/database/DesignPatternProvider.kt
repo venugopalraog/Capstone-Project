@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.net.Uri
 import com.capstone.designpatterntutorial.database.DesignPatternContract.FavoritePatternEntry
+import com.capstone.designpatterntutorial.database.DesignPatternContract.RecentPatternEntry
 
 class DesignPatternProvider : ContentProvider() {
 
@@ -14,6 +15,8 @@ class DesignPatternProvider : ContentProvider() {
 
     override fun onCreate(): Boolean {
         openHelper = DesignPatternDbHelper(context!!)
+        // This ensures the database is created and populated before any other part of the app tries to access it.
+        openHelper.writableDatabase
         return true
     }
 
@@ -54,7 +57,7 @@ class DesignPatternProvider : ContentProvider() {
                 sortOrder
             )
             RECENT_PATTERN -> cursor = openHelper.readableDatabase.query(
-                DesignPatternContract.RecentPatternEntry.TABLE_NAME,
+                RecentPatternEntry.TABLE_NAME,
                 projection,
                 selection,
                 selectionArgs,
@@ -81,6 +84,14 @@ class DesignPatternProvider : ContentProvider() {
                 val id = db.insertWithOnConflict(FavoritePatternEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
                 returnUri = if (id > 0) {
                     FavoritePatternEntry.buildPatternUri(id)
+                } else {
+                    throw android.database.SQLException("Failed to insert row into $uri")
+                }
+            }
+            RECENT_PATTERN -> {
+                val id = db.insertWithOnConflict(RecentPatternEntry.TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+                returnUri = if (id > 0) {
+                    RecentPatternEntry.buildPatternUri(id)
                 } else {
                     throw android.database.SQLException("Failed to insert row into $uri")
                 }
