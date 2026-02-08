@@ -22,19 +22,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.capstone.designpatterntutorial.model.mainscreen.Pattern
 import com.capstone.designpatterntutorial.viewmodels.FavoritesState
 import com.capstone.designpatterntutorial.viewmodels.HomeEvent
 import com.capstone.designpatterntutorial.viewmodels.HomeState
 import com.capstone.designpatterntutorial.viewmodels.HomeViewModel
-import com.google.gson.Gson
 import kotlinx.coroutines.launch
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,24 +70,22 @@ fun HomeScreen(viewModel: HomeViewModel) {
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    val state by viewModel.state.collectAsState()
+                    val homeState by viewModel.state.collectAsState()
                     val favoritesState by viewModel.favoritesState.collectAsState()
 
                     NavHost(navController = navController, startDestination = "categories") {
                         composable("categories") {
-                             when (val homeState = state) {
+                             when (val state = homeState) {
                                 is HomeState.Loading -> {
                                     CircularProgressIndicator()
                                 }
                                 is HomeState.Success -> {
-                                    CategoryList(categories = homeState.data.categoryList) {
-                                        val patternJson = Gson().toJson(it)
-                                        val encodedPattern = URLEncoder.encode(patternJson, StandardCharsets.UTF_8.toString())
-                                        navController.navigate("pattern/$encodedPattern")
+                                    CategoryList(categories = state.data.categoryList) {
+                                        navController.navigate("pattern/${it.id}")
                                     }
                                 }
                                 is HomeState.Error -> {
-                                    Text(text = homeState.message)
+                                    Text(text = state.message)
                                 }
                             }
                         }
@@ -101,9 +96,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
                                 }
                                 is FavoritesState.Success -> {
                                     FavoriteList(patterns = favState.patterns) {
-                                        val patternJson = Gson().toJson(it)
-                                        val encodedPattern = URLEncoder.encode(patternJson, StandardCharsets.UTF_8.toString())
-                                        navController.navigate("pattern/$encodedPattern")
+                                        navController.navigate("pattern/${it.id}")
                                     }
                                 }
                                 is FavoritesState.Error -> {
@@ -112,17 +105,25 @@ fun HomeScreen(viewModel: HomeViewModel) {
                             }
                         }
                         composable(
-                            "pattern/{pattern}",
-                            arguments = listOf(navArgument("pattern") { type = PatternNavType })
+                            "pattern/{patternId}",
+                            arguments = listOf(navArgument("patternId") { type = NavType.IntType })
                         ) { backStackEntry ->
-                            val pattern = backStackEntry.arguments?.getSerializable("pattern") as Pattern
-                            PatternScreen(
-                                pattern = pattern,
-                                onBackClicked = { navController.popBackStack() },
-                                onFavoriteClicked = { 
-                                    viewModel.onEvent(HomeEvent.ToggleFavorite(it))
+                            val patternId = backStackEntry.arguments?.getInt("patternId")
+                            if (patternId != null) {
+                                // Find the pattern from the state
+                                val pattern = (homeState as? HomeState.Success)?.data?.categoryList?.flatMap { it.patternList }?.find { it.id == patternId }
+                                    ?: (favoritesState as? FavoritesState.Success)?.patterns?.find { it.id == patternId }
+
+                                if (pattern != null) {
+                                    PatternScreen(
+                                        pattern = pattern,
+                                        onBackClicked = { navController.popBackStack() },
+                                        onFavoriteClicked = { 
+                                            viewModel.onEvent(HomeEvent.ToggleFavorite(it))
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }

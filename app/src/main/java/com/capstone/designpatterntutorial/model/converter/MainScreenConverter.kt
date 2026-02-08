@@ -45,10 +45,11 @@ object MainScreenConverter {
             val name = cursor.getString(cursor.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_NAME))
             val pattern = Pattern(
                 id = cursor.getInt(cursor.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_ID)),
+                categoryId = cursor.getInt(cursor.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_CATEGORY_ID)),
                 name = name,
                 summary = cursor.getString(cursor.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_DESCRIPTION)),
                 url = cursor.getString(cursor.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_INTENT)),
-                type = "", // You might want to add a 'type' column to your database
+                imageName = cursor.getString(cursor.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_IMAGE_NAME)),
                 isFavorite = isFavoritePattern(contentResolver, name)
             )
             patternList.add(pattern)
@@ -75,9 +76,11 @@ object MainScreenConverter {
     fun toFavoritePatternContentValues(pattern: Pattern): ContentValues {
         val cv = ContentValues()
         cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_ID, pattern.id)
+        cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_CATEGORY_ID, pattern.categoryId)
         cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_NAME, pattern.name)
         cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_DESCRIPTION, pattern.summary)
         cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_INTENT, pattern.url)
+        cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_IMAGE_NAME, pattern.imageName)
         return cv
     }
 }

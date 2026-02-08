@@ -17,6 +17,7 @@ This release marks a significant architectural shift from a traditional Android 
     - `PatternScreen.kt`: A composable for displaying the details of a selected pattern.
     - `NavigationDrawer.kt`: A composable for the app's main navigation drawer.
     - `FavoriteList.kt`: A composable for displaying the list of favorite patterns.
+    - `HtmlText.kt`: A composable for rendering HTML text.
 - **MVI Architecture:**
     - `HomeViewModel.kt`: A new `ViewModel` that manages the UI state for the `HomeScreen` and handles user events.
     - `HomeState.kt` & `HomeEvent.kt`: Sealed classes that define the possible states and events for the MVI pattern.
@@ -29,6 +30,8 @@ This release marks a significant architectural shift from a traditional Android 
     - Converted `Pattern`, `Category`, `MainScreenData`, and `FavoriteScreenData` from Java classes to Kotlin data classes, and made them `Serializable`.
 - **Kotlin Services & Converters:**
     - Converted `FavoriteDbService` and `MainScreenConverter` to Kotlin.
+- **Compatibility:**
+    - `IntentCompat.kt`: Added a compatibility function to safely retrieve `Serializable` objects from `Intents` on all Android versions.
 
 ### Changed
 
@@ -42,10 +45,21 @@ This release marks a significant architectural shift from a traditional Android 
     - Replaced Fragment-based navigation with a `NavHost` in Jetpack Compose.
     - Implemented a custom `NavType` to pass `Pattern` objects between composables.
     - URL-encoded the `Pattern` JSON to prevent crashes during navigation.
+    - Updated navigation to pass only the pattern ID, which is a more robust solution.
 - **Favorites:**
     - Added a "favorite" icon to the `PatternScreen`.
     - Updated the `HomeViewModel` to handle adding and removing favorites.
     - Implemented the "Favorites" screen to display the list of favorite patterns.
+- **Pattern Screen:**
+    - The `PatternScreen` now parses and displays HTML content from the pattern summary.
+- **Database:**
+    - Converted `DesignPatternProvider.java` to Kotlin.
+
+### Fixed
+
+- **Fixed crash on favorite:** Resolved a crash that occurred when marking a pattern as a favorite by adding missing fields (`categoryId` and `imageName`) to the `Pattern` data class and ensuring they are correctly read from and written to the database.
+- **Fixed race condition on favorite:** Resolved a race condition that occurred when quickly tapping the favorite icon by implementing an optimistic update strategy in the `HomeViewModel`.
+- **Fixed database conflict on favorite:** Resolved a database conflict that occurred when inserting a favorite that already existed by using `insertWithOnConflict` in the `DesignPatternProvider`.
 
 ### Removed
 

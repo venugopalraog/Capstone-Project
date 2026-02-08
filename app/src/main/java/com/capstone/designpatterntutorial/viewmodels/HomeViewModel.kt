@@ -58,13 +58,42 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun toggleFavorite(pattern: Pattern) {
+    private fun toggleFavorite(patternToToggle: Pattern) {
+        val isCurrentlyFavorite = patternToToggle.isFavorite
+        val action = if (isCurrentlyFavorite) FavoriteDbService.ACTION_DELETE else FavoriteDbService.ACTION_INSERT
+
+        // Optimistically update the main patterns list state
+        val currentState = _state.value
+        if (currentState is HomeState.Success) {
+            val updatedCategories = currentState.data.categoryList.map { category ->
+                val updatedPatterns = category.patternList.map { pattern ->
+                    if (pattern.id == patternToToggle.id) {
+                        pattern.copy(isFavorite = !isCurrentlyFavorite)
+                    } else {
+                        pattern
+                    }
+                }
+                category.copy(patternList = ArrayList(updatedPatterns))
+            }
+            _state.value = HomeState.Success(currentState.data.copy(categoryList = ArrayList(updatedCategories)))
+        }
+
+        // Optimistically update the favorites list state
+        val currentFavoritesState = _favoritesState.value
+        if (currentFavoritesState is FavoritesState.Success) {
+            if (isCurrentlyFavorite) {
+                _favoritesState.value = FavoritesState.Success(currentFavoritesState.patterns.filterNot { it.id == patternToToggle.id })
+            } else {
+                _favoritesState.value = FavoritesState.Success(currentFavoritesState.patterns + patternToToggle.copy(isFavorite = true))
+            }
+        }
+
+        // Dispatch the database operation to the background service
         val intent = Intent(application, FavoriteDbService::class.java).apply {
-            action = if (pattern.isFavorite) FavoriteDbService.ACTION_DELETE else FavoriteDbService.ACTION_INSERT
-            putExtra(FavoriteDbService.PATTERN, pattern)
+            this.action = action
+            putExtra(FavoriteDbService.PATTERN, patternToToggle)
         }
         application.startService(intent)
-        loadPatterns()
     }
 
     private fun loadPatterns() {
@@ -126,10 +155,11 @@ class HomeViewModel @Inject constructor(
                         favorites.add(
                             Pattern(
                                 id = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.FavoritePatternEntry.COLUMN_ID)),
+                                categoryId = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.FavoritePatternEntry.COLUMN_CATEGORY_ID)),
                                 name = name,
                                 summary = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.FavoritePatternEntry.COLUMN_DESCRIPTION)),
                                 url = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.FavoritePatternEntry.COLUMN_INTENT)),
-                                type = "", // You might want to add a 'type' column to your database
+                                imageName = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.FavoritePatternEntry.COLUMN_IMAGE_NAME)),
                                 isFavorite = true
                             )
                         )

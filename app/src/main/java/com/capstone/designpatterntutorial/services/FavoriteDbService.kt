@@ -5,6 +5,7 @@ import android.content.Intent
 import com.capstone.designpatterntutorial.database.DesignPatternContract
 import com.capstone.designpatterntutorial.model.converter.MainScreenConverter
 import com.capstone.designpatterntutorial.model.mainscreen.Pattern
+import com.capstone.designpatterntutorial.util.getSerializableCompat
 
 class FavoriteDbService : IntentService("FavoriteDbService") {
 
@@ -17,12 +18,12 @@ class FavoriteDbService : IntentService("FavoriteDbService") {
     override fun onHandleIntent(intent: Intent?) {
         when (intent?.action) {
             ACTION_INSERT -> {
-                val pattern = intent.getSerializableExtra(PATTERN) as Pattern
-                insertFavoritePattern(pattern)
+                val pattern = intent.getSerializableCompat<Pattern>(PATTERN)
+                pattern?.let { insertFavoritePattern(it) }
             }
             ACTION_DELETE -> {
-                val pattern = intent.getSerializableExtra(PATTERN) as Pattern
-                deleteFavoritePattern(pattern)
+                val pattern = intent.getSerializableCompat<Pattern>(PATTERN)
+                pattern?.let { deleteFavoritePattern(it) }
             }
         }
     }

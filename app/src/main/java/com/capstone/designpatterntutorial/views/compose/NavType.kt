@@ -3,13 +3,14 @@ package com.capstone.designpatterntutorial.views.compose
 import android.os.Bundle
 import androidx.navigation.NavType
 import com.capstone.designpatterntutorial.model.mainscreen.Pattern
+import com.capstone.designpatterntutorial.util.getSerializableCompat
 import com.google.gson.Gson
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 val PatternNavType: NavType<Pattern> = object : NavType<Pattern>(isNullableAllowed = false) {
     override fun get(bundle: Bundle, key: String): Pattern? {
-        return bundle.getSerializable(key) as Pattern?
+        return bundle.getSerializableCompat<Pattern>(key)
     }
 
     override fun parseValue(value: String): Pattern {

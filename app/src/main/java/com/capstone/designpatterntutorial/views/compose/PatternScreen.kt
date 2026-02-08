@@ -1,7 +1,7 @@
 package com.capstone.designpatterntutorial.views.compose
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -43,9 +43,11 @@ fun PatternScreen(
                 }
             )
         }
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = pattern.summary)
+    ) {paddingValues ->
+        LazyColumn(modifier = Modifier.padding(paddingValues).padding(16.dp)) {
+            item {
+                HtmlText(html = pattern.summary)
+            }
         }
     }
 }
