@@ -18,6 +18,8 @@ This release marks a significant architectural shift from a traditional Android 
     - `NavigationDrawer.kt`: A composable for the app's main navigation drawer.
     - `FavoriteList.kt`: A composable for displaying the list of favorite patterns.
     - `HtmlText.kt`: A composable for rendering HTML text.
+    - `CategoryScreen.kt`: A composable for displaying the patterns for a single category.
+    - `PatternListItem.kt`: A composable for displaying a single pattern in a list.
 - **MVI Architecture:**
     - `HomeViewModel.kt`: A new `ViewModel` that manages the UI state for the `HomeScreen` and handles user events.
     - `HomeState.kt` & `HomeEvent.kt`: Sealed classes that define the possible states and events for the MVI pattern.
@@ -50,16 +52,21 @@ This release marks a significant architectural shift from a traditional Android 
     - Added a "favorite" icon to the `PatternScreen`.
     - Updated the `HomeViewModel` to handle adding and removing favorites.
     - Implemented the "Favorites" screen to display the list of favorite patterns.
+    - Added a message to the favorites screen when no favorites have been added.
 - **Pattern Screen:**
     - The `PatternScreen` now parses and displays HTML content from the pattern summary.
 - **Database:**
     - Converted `DesignPatternProvider.java` to Kotlin.
+- **UI:**
+    - Replaced the single list of categories with a bottom navigation bar.
+    - Added icons to the bottom navigation bar.
 
 ### Fixed
 
 - **Fixed crash on favorite:** Resolved a crash that occurred when marking a pattern as a favorite by adding missing fields (`categoryId` and `imageName`) to the `Pattern` data class and ensuring they are correctly read from and written to the database.
 - **Fixed race condition on favorite:** Resolved a race condition that occurred when quickly tapping the favorite icon by implementing an optimistic update strategy in the `HomeViewModel`.
 - **Fixed database conflict on favorite:** Resolved a database conflict that occurred when inserting a favorite that already existed by using `insertWithOnConflict` in the `DesignPatternProvider`.
+- **Fixed Unresolved reference for icons:** Corrected the icon references in `HomeScreen.kt` by adding the `androidx.compose.material:material-icons-extended` dependency.
 
 ### Removed
 
