@@ -10,7 +10,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
@@ -30,7 +29,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -92,40 +90,41 @@ fun HomeScreen(viewModel: HomeViewModel) {
 
     Scaffold(
         topBar = {
-            if (isSearchActive) {
-                TopAppBar(
-                    title = {
-                        TextField(
-                            value = searchQuery,
-                            onValueChange = {
-                                searchQuery = it
-                                viewModel.onEvent(HomeEvent.Search(it))
-                            },
-                            placeholder = { Text("Search Patterns") },
-                        )
-                    },
-                    actions = {
+            TopAppBar(
+                title = {
+                    when {
+                        isSearchActive -> Text("Search")
+                        currentRoute?.startsWith("pattern/") == true -> {
+                            val patternId = navBackStackEntry?.arguments?.getInt("patternId")
+                            val pattern = patternId?.let { findPatternById(it, homeState, favoritesState, recentsState, searchState) }
+                            Text(pattern?.name ?: "Pattern Detail")
+                        }
+                        currentRoute == "about" -> Text("About")
+                        else -> Text("Design Pattern Tutorial")
+                    }
+                },
+                navigationIcon = {
+                    if (isSearchActive) {
                         IconButton(onClick = {
                             isSearchActive = false
                             searchQuery = ""
                         }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Close Search")
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Close Search")
+                        }
+                    } else if (currentRoute?.startsWith("pattern/") == true || currentRoute == "about") {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                         }
                     }
-                )
-            } else {
-                when {
-                    currentRoute?.startsWith("pattern/") == true -> {
-                        val patternId = navBackStackEntry?.arguments?.getInt("patternId")
-                        val pattern = patternId?.let { findPatternById(it, homeState, favoritesState, recentsState, searchState) }
-                        TopAppBar(
-                            title = { Text(pattern?.name ?: "Pattern Detail") },
-                            navigationIcon = {
-                                IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                                }
-                            },
-                            actions = {
+                },
+                actions = {
+                    if (isSearchActive) {
+                        // No actions needed for search title bar as search field is in content
+                    } else {
+                        when {
+                            currentRoute?.startsWith("pattern/") == true -> {
+                                val patternId = navBackStackEntry?.arguments?.getInt("patternId")
+                                val pattern = patternId?.let { findPatternById(it, homeState, favoritesState, recentsState, searchState) }
                                 pattern?.let { p ->
                                     IconButton(onClick = { viewModel.onEvent(HomeEvent.ToggleFavorite(p)) }) {
                                         Icon(
@@ -135,23 +134,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
                                     }
                                 }
                             }
-                        )
-                    }
-                    currentRoute == "about" -> {
-                        TopAppBar(
-                            title = { Text("About") },
-                            navigationIcon = {
-                                IconButton(onClick = { navController.popBackStack() }) {
-                                    Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                                }
-                            }
-                        )
-                    }
-                    else -> {
-                        var showMenu by remember { mutableStateOf(false) }
-                        TopAppBar(
-                            title = { Text("Design Pattern Tutorial") },
-                            actions = {
+                            currentRoute == "about" -> {}
+                            else -> {
+                                var showMenu by remember { mutableStateOf(false) }
                                 IconButton(onClick = { isSearchActive = true }) {
                                     Icon(Icons.Filled.Search, contentDescription = "Search")
                                 }
@@ -169,10 +154,10 @@ fun HomeScreen(viewModel: HomeViewModel) {
                                     )
                                 }
                             }
-                        )
+                        }
                     }
                 }
-            }
+            )
         },
         bottomBar = {
             if (showMainUI && !isSearchActive) {
@@ -197,8 +182,16 @@ fun HomeScreen(viewModel: HomeViewModel) {
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             if (isSearchActive) {
-                SearchScreen(searchState = searchState, query = searchQuery) {
+                SearchScreen(
+                    searchState = searchState,
+                    query = searchQuery,
+                    onQueryChange = {
+                        searchQuery = it
+                        viewModel.onEvent(HomeEvent.Search(it))
+                    }
+                ) {
                     isSearchActive = false
+                    searchQuery = ""
                     navController.navigate("pattern/${it.id}")
                 }
             } else {
