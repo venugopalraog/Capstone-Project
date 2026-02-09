@@ -100,12 +100,17 @@ This release marks a significant architectural shift from a traditional Android 
 - **Fixed Google Fonts certificate error:** Added the necessary `font_certs.xml` resource file and corrected the `GoogleFont.Provider` constructor in `Type.kt`.
 - **Fixed double bottom navigation bar:** Removed the nested `Scaffold` in `HomeScreen.kt` to prevent two bottom navigation bars from being displayed.
 - **Fixed inconsistent title bar:** Refactored `HomeScreen` to only show the main `TopAppBar` on top-level screens.
+- **Fixed broken search and empty screens:** Corrected the UI state logic to ensure the search screen appears when active and that data for Favorites and Recents is loaded correctly.
 
 ### Removed
 
 - **Legacy Architecture:**
     - Deleted the old fragment-based UI, including `CategoryFragment`, `FavoriteListFragment`, `PatternFragment`, and others.
     - Removed the `HomePresenter` and other presenters.
+- **Legacy UI Resources:**
+    - Removed obsolete XML layouts, menus, animations, and widget-related resources to complete the migration to Jetpack Compose.
+- **App Widget:**
+    - Removed the legacy home screen widget and its related Java code for a more focused, modern codebase.
 - **Legacy Dependencies:**
     - Removed the `EventBus` dependency.
     - Removed data binding from the build configuration.

@@ -15,8 +15,8 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android.roundIcon="@mipmap/ic_launcher_round"
-        android.supportsRtl="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
         <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 -->
@@ -57,25 +57,6 @@
         <service
             android:name=".services.RecentDbService"
             android:exported="false"/>
-
-        <receiver
-            android:name=".widgets.PatternWidgetProvider"
-            android:label="@string/title_pattern_widget"
-            android:exported="true">
-
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_info_fav_pattern_list"/>
-        </receiver>
-
-        <service
-            android:name=".widgets.PatternWidgetService"
-            android:exported="false"
-            android:permission="android.permission.BIND_REMOTEVIEWS"/>
 
     </application>
 
