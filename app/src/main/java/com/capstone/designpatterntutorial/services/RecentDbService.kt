@@ -26,7 +26,7 @@ class RecentDbService : IntentService("RecentDbService") {
     private fun insertRecentPattern(pattern: Pattern) {
         contentResolver.insert(
             DesignPatternContract.RecentPatternEntry.CONTENT_URI,
-            MainScreenConverter.toFavoritePatternContentValues(pattern) // We can reuse this for recents
+            MainScreenConverter.toRecentPatternContentValues(pattern)
         )
     }
 }

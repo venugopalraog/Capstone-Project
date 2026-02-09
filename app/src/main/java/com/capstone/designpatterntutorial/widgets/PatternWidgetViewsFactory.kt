@@ -1,107 +1,97 @@
-package com.capstone.designpatterntutorial.widgets;
+package com.capstone.designpatterntutorial.widgets
 
-import android.appwidget.AppWidgetManager;
-import android.content.Context;
-import android.content.Intent;
-import android.database.Cursor;
-import android.os.Binder;
-import android.widget.RemoteViews;
-import android.widget.RemoteViewsService;
+import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.content.Intent
+import android.database.Cursor
+import android.os.Binder
+import android.os.Build
+import android.text.Html
+import android.widget.RemoteViews
+import android.widget.RemoteViewsService
+import com.capstone.designpatterntutorial.R
+import com.capstone.designpatterntutorial.database.DesignPatternContract.FavoritePatternEntry
+import com.capstone.designpatterntutorial.views.activities.HomeActivity
 
-import com.capstone.designpatterntutorial.R;
-import com.capstone.designpatterntutorial.database.DesignPatternContract.FavoritePatternEntry;
-import com.capstone.designpatterntutorial.views.activities.HomeActivity;
+class PatternWidgetViewsFactory(
+    private val context: Context,
+    intent: Intent
+) : RemoteViewsService.RemoteViewsFactory {
 
-import timber.log.Timber;
+    private val appWidgetId: Int = intent.getIntExtra(
+        AppWidgetManager.EXTRA_APPWIDGET_ID,
+        AppWidgetManager.INVALID_APPWIDGET_ID
+    )
+    private var cursor: Cursor? = null
 
-import static android.content.ContentValues.TAG;
-
-/**
- * Created by gubbave on 12/29/2016.
- */
-
-public class PatternWidgetViewsFactory implements RemoteViewsService.RemoteViewsFactory {
-
-    private Context mContext;
-    private int appWidgetId;
-    private Cursor cursor;
-
-
-    public PatternWidgetViewsFactory(Context context, Intent intent) {
-        mContext = context;
-        appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID);
+    override fun onCreate() {
+        // Data is fetched in onDataSetChanged(), which is called immediately after.
     }
 
-    @Override
-    public void onCreate() {
-        Timber.tag(TAG).d("Widget :: onCreate");
-        cursor = mContext.getContentResolver().query(FavoritePatternEntry.CONTENT_URI,
-                FavoritePatternEntry.FAVORITE_PATTERN_COLUMNS,
-                null, null, FavoritePatternEntry.COLUMN_NAME);
+    override fun onDataSetChanged() {
+        val identityToken = Binder.clearCallingIdentity()
+        cursor?.close()
+        cursor = context.contentResolver.query(
+            FavoritePatternEntry.CONTENT_URI,
+            FavoritePatternEntry.FAVORITE_PATTERN_COLUMNS,
+            null,
+            null,
+            FavoritePatternEntry.COLUMN_NAME
+        )
+        Binder.restoreCallingIdentity(identityToken)
     }
 
-    @Override
-    public void onDataSetChanged() {
-        final long identityToken = Binder.clearCallingIdentity();
+    override fun onDestroy() {
+        cursor?.close()
+    }
 
-        if (cursor != null) {
-            cursor.close();
+    override fun getCount(): Int {
+        return cursor?.count ?: 0
+    }
+
+    override fun getViewAt(position: Int): RemoteViews {
+        val row = RemoteViews(context.packageName, R.layout.list_item_quote_widget)
+        cursor?.moveToPosition(position)
+
+        val name = cursor?.getString(cursor!!.getColumnIndexOrThrow(FavoritePatternEntry.COLUMN_NAME))
+        val descriptionHtml = cursor?.getString(cursor!!.getColumnIndexOrThrow(FavoritePatternEntry.COLUMN_DESCRIPTION))
+
+        val descriptionText = if (descriptionHtml != null) {
+            val unescapedHtml = descriptionHtml.replace("\\r\\n", "").replace("\\", "")
+            val plainText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                Html.fromHtml(unescapedHtml, Html.FROM_HTML_MODE_LEGACY).toString()
+            } else {
+                @Suppress("DEPRECATION")
+                Html.fromHtml(unescapedHtml).toString()
+            }
+            // Truncate to the first sentence for a cleaner widget UI.
+            plainText.substringBefore(".") + "."
+        } else {
+            ""
         }
-        Timber.tag(TAG).d("Widget :: onDataSetChanged");
-        cursor = mContext.getContentResolver().query(FavoritePatternEntry.CONTENT_URI,
-                FavoritePatternEntry.FAVORITE_PATTERN_COLUMNS,
-                null, null, FavoritePatternEntry.COLUMN_NAME);
 
-        Binder.restoreCallingIdentity(identityToken);
+        row.setTextViewText(R.id.item_design_pattern_title, name)
+        row.setTextViewText(R.id.item_design_pattern_description, descriptionText)
+
+        val clickIntent = Intent(context, HomeActivity::class.java)
+        row.setOnClickFillInIntent(R.id.widget_row, clickIntent)
+
+        return row
     }
 
-    @Override
-    public void onDestroy() {
-
+    override fun getLoadingView(): RemoteViews? {
+        return null
     }
 
-    @Override
-    public int getCount() {
-        return cursor != null ? cursor.getCount() : 0;
+    override fun getViewTypeCount(): Int {
+        return 1
     }
 
-    @Override
-    public RemoteViews getViewAt(int position) {
-        Timber.tag(TAG).d("Widget :: getViewAt : " + position);
-
-        RemoteViews row = new RemoteViews(mContext.getPackageName(),
-                R.layout.list_item_quote_widget);
-        cursor.moveToPosition(position);
-
-        row.setTextViewText(R.id.item_design_pattern_title,
-                cursor.getString(cursor.getColumnIndex(FavoritePatternEntry.COLUMN_NAME)));
-        row.setTextViewText(R.id.item_design_pattern_description,
-                cursor.getString(cursor.getColumnIndex(FavoritePatternEntry.COLUMN_INTENT)));
-
-        Intent clickIntent = new Intent(mContext, HomeActivity.class);
-        row.setOnClickFillInIntent(R.id.widget_row, clickIntent);
-
-        return row;
+    override fun getItemId(position: Int): Long {
+        return position.toLong()
     }
 
-    @Override
-    public RemoteViews getLoadingView() {
-        return null;
-    }
-
-    @Override
-    public int getViewTypeCount() {
-        return 1;
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    public boolean hasStableIds() {
-        return true;
+    override fun hasStableIds(): Boolean {
+        return true
     }
 }

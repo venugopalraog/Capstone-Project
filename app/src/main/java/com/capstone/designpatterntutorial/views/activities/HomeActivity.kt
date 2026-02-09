@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import com.capstone.designpatterntutorial.di.MyApplication
+import com.capstone.designpatterntutorial.ui.theme.DesignPatternTutorialTheme
 import com.capstone.designpatterntutorial.viewmodels.HomeEvent
 import com.capstone.designpatterntutorial.viewmodels.HomeViewModel
 import com.capstone.designpatterntutorial.views.compose.HomeScreen
@@ -25,7 +26,9 @@ class HomeActivity : ComponentActivity() {
         viewModel.onEvent(HomeEvent.LoadPatterns)
 
         setContent {
-            HomeScreen(viewModel)
+            DesignPatternTutorialTheme {
+                HomeScreen(viewModel)
+            }
         }
     }
 }

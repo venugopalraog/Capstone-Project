@@ -15,6 +15,7 @@ import com.capstone.designpatterntutorial.viewmodels.SearchState
 @Composable
 fun SearchScreen(
     searchState: SearchState,
+    query: String,
     onPatternClicked: (Pattern) -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -28,7 +29,7 @@ fun SearchScreen(
                 } else {
                     LazyColumn {
                         items(searchState.patterns) {
-                            PatternListItem(pattern = it, onPatternClicked = onPatternClicked)
+                            PatternListItem(pattern = it, query = query, onPatternClicked = onPatternClicked)
                         }
                     }
                 }

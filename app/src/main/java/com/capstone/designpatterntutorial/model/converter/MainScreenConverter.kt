@@ -83,4 +83,15 @@ object MainScreenConverter {
         cv.put(DesignPatternContract.FavoritePatternEntry.COLUMN_IMAGE_NAME, pattern.imageName)
         return cv
     }
+
+    fun toRecentPatternContentValues(pattern: Pattern): ContentValues {
+        val cv = ContentValues()
+        cv.put(DesignPatternContract.RecentPatternEntry.COLUMN_ID, pattern.id)
+        cv.put(DesignPatternContract.RecentPatternEntry.COLUMN_CATEGORY_ID, pattern.categoryId)
+        cv.put(DesignPatternContract.RecentPatternEntry.COLUMN_NAME, pattern.name)
+        cv.put(DesignPatternContract.RecentPatternEntry.COLUMN_DESCRIPTION, pattern.summary)
+        cv.put(DesignPatternContract.RecentPatternEntry.COLUMN_INTENT, pattern.url)
+        cv.put(DesignPatternContract.RecentPatternEntry.COLUMN_IMAGE_NAME, pattern.imageName)
+        return cv
+    }
 }

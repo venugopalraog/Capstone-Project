@@ -1,135 +1,103 @@
-package com.capstone.designpatterntutorial.database;
+package com.capstone.designpatterntutorial.database
 
-import android.net.Uri;
-import android.provider.BaseColumns;
+import android.net.Uri
+import android.provider.BaseColumns
 
-/**
- * Created by gubbave on 4/17/2017.
- */
+object DesignPatternContract {
+    const val CONTENT_AUTHORITY = "com.capstone.designpatterntutorial"
+    @JvmField
+    val BASE_CONTENT_URI: Uri = Uri.parse("content://$CONTENT_AUTHORITY")
 
-public class DesignPatternContract {
+    const val PATH_CATEGORY = "category"
+    const val PATH_PATTERN = "pattern"
+    const val PATH_FAVORITE_PATTERN = "favorite_pattern"
+    const val PATH_RECENT_PATTERN = "recent_pattern"
 
-    public static final String CONTENT_AUTHORITY = "com.capstone.designpatterntutorial";
-    public static final Uri BASE_CONTENT_URI = Uri.parse("content://" + CONTENT_AUTHORITY);
+    object CategoryEntry : BaseColumns {
+        @JvmStatic
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_CATEGORY).build()
+        const val TABLE_NAME = "category"
+        const val COLUMN_ID = "id"
+        const val COLUMN_NAME = "name"
+        const val COLUMN_DESCRIPTION = "description"
+        @JvmStatic
+        val CATEGORY_COLUMNS = arrayOf(
+            COLUMN_ID,
+            COLUMN_NAME,
+            COLUMN_DESCRIPTION
+        )
+    }
 
-    public static final String PATH_CATEGORY = "category";
-    public static final String PATH_PATTERN = "pattern";
-    public static final String PATH_FAVORITE_PATTERN = "favorite_pattern";
-    public static final String PATH_RECENT_PATTERN = "recent_pattern";
+    object PatternEntry : BaseColumns {
+        @JvmStatic
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_PATTERN).build()
+        const val TABLE_NAME = "pattern"
+        const val COLUMN_ID = "id"
+        const val COLUMN_CATEGORY_ID = "categoryId"
+        const val COLUMN_NAME = "name"
+        const val COLUMN_DESCRIPTION = "description"
+        const val COLUMN_INTENT = "intent"
+        const val COLUMN_IMAGE_NAME = "imageName"
+        @JvmStatic
+        val PATTERN_COLUMNS = arrayOf(
+            COLUMN_ID,
+            COLUMN_NAME,
+            COLUMN_INTENT,
+            COLUMN_DESCRIPTION,
+            COLUMN_IMAGE_NAME,
+            COLUMN_CATEGORY_ID
+        )
+    }
 
+    object FavoritePatternEntry : BaseColumns {
+        @JvmStatic
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_FAVORITE_PATTERN).build()
+        const val TABLE_NAME = "favorite_pattern"
+        const val COLUMN_ID = "id"
+        const val COLUMN_CATEGORY_ID = "categoryId"
+        const val COLUMN_NAME = "name"
+        const val COLUMN_DESCRIPTION = "description"
+        const val COLUMN_INTENT = "intent"
+        const val COLUMN_IMAGE_NAME = "imageName"
+        @JvmStatic
+        val FAVORITE_PATTERN_COLUMNS = arrayOf(
+            COLUMN_ID,
+            COLUMN_NAME,
+            COLUMN_INTENT,
+            COLUMN_DESCRIPTION,
+            COLUMN_IMAGE_NAME,
+            COLUMN_CATEGORY_ID
+        )
 
-    /* Inner class that defines the table contents of the category table */
-    public static final class CategoryEntry implements BaseColumns {
-
-        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon()
-                .appendPath(PATH_CATEGORY)
-                .build();
-
-        public static final String TABLE_NAME = "category";
-
-        public static final String COLUMN_ID = "id";
-        public static final String COLUMN_NAME = "name";
-        public static final String COLUMN_DESCRIPTION = "description";
-
-        public static final String[] CATEGORY_COLUMNS = {
-                COLUMN_ID,
-                COLUMN_NAME,
-                COLUMN_DESCRIPTION
-        };
-
-        public static Uri buildCategoryUri(long date) {
-            return CONTENT_URI;
+        @JvmStatic
+        fun buildPatternUri(id: Long): Uri {
+            return CONTENT_URI.buildUpon().appendPath(id.toString()).build()
         }
     }
 
-    /* Inner class that defines the table contents of the pattern table */
-    public static final class PatternEntry implements BaseColumns {
+    object RecentPatternEntry : BaseColumns {
+        @JvmStatic
+        val CONTENT_URI: Uri = BASE_CONTENT_URI.buildUpon().appendPath(PATH_RECENT_PATTERN).build()
+        const val TABLE_NAME = "recent_pattern"
+        const val COLUMN_ID = "id"
+        const val COLUMN_CATEGORY_ID = "categoryId"
+        const val COLUMN_NAME = "name"
+        const val COLUMN_DESCRIPTION = "description"
+        const val COLUMN_INTENT = "intent"
+        const val COLUMN_IMAGE_NAME = "imageName"
+        @JvmStatic
+        val RECENT_PATTERN_COLUMNS = arrayOf(
+            COLUMN_ID,
+            COLUMN_NAME,
+            COLUMN_INTENT,
+            COLUMN_DESCRIPTION,
+            COLUMN_IMAGE_NAME,
+            COLUMN_CATEGORY_ID
+        )
 
-        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon()
-                .appendPath(PATH_PATTERN)
-                .build();
-
-        public static final String TABLE_NAME = "pattern";
-
-        public static final String COLUMN_ID = "id";
-        public static final String COLUMN_CATEGORY_ID = "categoryId";
-        public static final String COLUMN_NAME = "name";
-        public static final String COLUMN_DESCRIPTION = "description";
-        public static final String COLUMN_INTENT = "intent";
-        public static final String COLUMN_IMAGE_NAME = "imageName";
-
-        public static final String[] PATTERN_COLUMNS = {
-                COLUMN_ID,
-                COLUMN_NAME,
-                COLUMN_INTENT,
-                COLUMN_DESCRIPTION,
-                COLUMN_IMAGE_NAME,
-                COLUMN_CATEGORY_ID,
-        };
-
-        public static Uri buildPatternUri(long date) {
-            return CONTENT_URI;
+        @JvmStatic
+        fun buildPatternUri(id: Long): Uri {
+            return CONTENT_URI.buildUpon().appendPath(id.toString()).build()
         }
     }
-
-    /* Inner class that defines the table contents of the favorite_pattern table */
-    public static final class FavoritePatternEntry implements BaseColumns {
-
-        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon()
-                .appendPath(PATH_FAVORITE_PATTERN)
-                .build();
-
-        public static final String TABLE_NAME = "favorite_pattern";
-
-        public static final String COLUMN_ID = "id";
-        public static final String COLUMN_CATEGORY_ID = "categoryId";
-        public static final String COLUMN_NAME = "name";
-        public static final String COLUMN_DESCRIPTION = "description";
-        public static final String COLUMN_INTENT = "intent";
-        public static final String COLUMN_IMAGE_NAME = "imageName";
-
-        public static final String[] FAVORITE_PATTERN_COLUMNS = {
-                COLUMN_ID,
-                COLUMN_NAME,
-                COLUMN_INTENT,
-                COLUMN_DESCRIPTION,
-                COLUMN_IMAGE_NAME,
-                COLUMN_CATEGORY_ID
-        };
-
-        public static Uri buildPatternUri(long date) {
-            return CONTENT_URI;
-        }
-    }
-
-    /* Inner class that defines the table contents of the recent_pattern table */
-    public static final class RecentPatternEntry implements BaseColumns {
-
-        public static final Uri CONTENT_URI = BASE_CONTENT_URI.buildUpon()
-                .appendPath(PATH_RECENT_PATTERN)
-                .build();
-
-        public static final String TABLE_NAME = "recent_pattern";
-
-        public static final String COLUMN_ID = "id";
-        public static final String COLUMN_CATEGORY_ID = "categoryId";
-        public static final String COLUMN_NAME = "name";
-        public static final String COLUMN_DESCRIPTION = "description";
-        public static final String COLUMN_INTENT = "intent";
-        public static final String COLUMN_IMAGE_NAME = "imageName";
-
-        public static final String[] RECENT_PATTERN_COLUMNS = {
-                COLUMN_ID,
-                COLUMN_NAME,
-                COLUMN_INTENT,
-                COLUMN_DESCRIPTION,
-                COLUMN_IMAGE_NAME,
-                COLUMN_CATEGORY_ID
-        };
-
-        public static Uri buildPatternUri(long date) {
-            return CONTENT_URI;
-        }
-    }
-
 }

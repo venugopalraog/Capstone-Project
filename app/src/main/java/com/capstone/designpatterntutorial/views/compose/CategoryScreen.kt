@@ -10,7 +10,7 @@ import com.capstone.designpatterntutorial.model.mainscreen.Pattern
 fun CategoryScreen(category: Category, onPatternClicked: (Pattern) -> Unit) {
     LazyColumn {
         items(category.patternList) {
-            PatternListItem(pattern = it, onPatternClicked = onPatternClicked)
+            PatternListItem(pattern = it, query = "", onPatternClicked = onPatternClicked)
         }
     }
 }

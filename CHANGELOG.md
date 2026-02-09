@@ -21,6 +21,7 @@ This release marks a significant architectural shift from a traditional Android 
     - `CategoryScreen.kt`: A composable for displaying the patterns for a single category.
     - `PatternListItem.kt`: A composable for displaying a single pattern in a list.
     - `SearchScreen.kt`: A composable for displaying search results.
+    - `AboutScreen.kt`: A composable for displaying information about the app.
 - **MVI Architecture:**
     - `HomeViewModel.kt`: A new `ViewModel` that manages the UI state for the `HomeScreen` and handles user events.
     - `HomeState.kt` & `HomeEvent.kt`: Sealed classes that define the possible states and events for the MVI pattern.
@@ -37,6 +38,12 @@ This release marks a significant architectural shift from a traditional Android 
     - Converted `FavoriteDbService`, `RecentDbService` and `MainScreenConverter` to Kotlin.
 - **Compatibility:**
     - `IntentCompat.kt`: Added a compatibility function to safely retrieve `Serializable` objects from `Intents` on all Android versions.
+- **Database:**
+    - Converted `DesignPatternContract.java` to `DesignPatternContract.kt`
+- **Widgets:**
+    - Converted `PatternWidgetViewsFactory.java` to `PatternWidgetViewsFactory.kt`
+- **Resources:**
+    - Added `font_certs.xml` to provide the necessary certificates for Google Fonts.
 
 ### Changed
 
@@ -65,6 +72,7 @@ This release marks a significant architectural shift from a traditional Android 
     - Implemented a search bar that appears when the search icon is clicked.
     - Updated the `HomeViewModel` to handle searching for patterns.
     - Implemented a `SearchScreen` to display search results.
+    - Refined the search to highlight the search query in the results.
 - **Pattern Screen:**
     - The `PatternScreen` now parses and displays HTML content from the pattern summary.
 - **Database:**
@@ -72,6 +80,12 @@ This release marks a significant architectural shift from a traditional Android 
 - **UI:**
     - Replaced the single list of categories with a bottom navigation bar.
     - Added icons to the bottom navigation bar.
+    - Wrapped pattern list items in `Card`s for a more defined look.
+    - Added a fade-in animation when switching categories.
+    - Updated the favorites screen to use `Card`s for a consistent look.
+    - Refactored the `HomeScreen` to use a single, persistent bottom navigation bar for top-level navigation.
+- **Theme:**
+    - Added a custom theme with the Montserrat font.
 
 ### Fixed
 
@@ -80,6 +94,12 @@ This release marks a significant architectural shift from a traditional Android 
 - **Fixed database conflict on favorite:** Resolved a database conflict that occurred when inserting a favorite that already existed by using `insertWithOnConflict` in the `DesignPatternProvider`.
 - **Fixed Unresolved reference for icons:** Corrected the icon references in `HomeScreen.kt` by adding the `androidx.compose.material:material-icons-extended` dependency.
 - **Fixed "No such table" error:** Implemented a robust, transaction-based database creation process in `DesignPatternDbHelper` to ensure the database is always created correctly.
+- **Fixed search highlight crash:** Passed an empty query to `PatternListItem` from `CategoryScreen` to prevent a crash when not in search mode.
+- **Fixed empty recents screen:** Created a dedicated `toRecentPatternContentValues` function to correctly save recent patterns to the database. Incremented `DATABASE_VERSION` to force an upgrade and ensure the `recents` table is properly created.
+- **Fixed private access error in widget:** Added `@JvmStatic` annotations to the properties in `DesignPatternContract.kt` to expose them to Java code.
+- **Fixed Google Fonts certificate error:** Added the necessary `font_certs.xml` resource file and corrected the `GoogleFont.Provider` constructor in `Type.kt`.
+- **Fixed double bottom navigation bar:** Removed the nested `Scaffold` in `HomeScreen.kt` to prevent two bottom navigation bars from being displayed.
+- **Fixed inconsistent title bar:** Refactored `HomeScreen` to only show the main `TopAppBar` on top-level screens.
 
 ### Removed
 

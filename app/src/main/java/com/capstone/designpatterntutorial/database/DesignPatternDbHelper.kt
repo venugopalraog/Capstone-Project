@@ -12,7 +12,7 @@ class DesignPatternDbHelper(private val context: Context) : SQLiteOpenHelper(con
 
     companion object {
         private const val DATABASE_NAME = "design_pattern.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 3 // Incremented version to force upgrade
     }
 
     override fun onCreate(db: SQLiteDatabase) {
