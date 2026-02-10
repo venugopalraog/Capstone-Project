@@ -54,6 +54,7 @@ import com.capstone.designpatterntutorial.viewmodels.HomeEvent
 import com.capstone.designpatterntutorial.viewmodels.HomeState
 import com.capstone.designpatterntutorial.viewmodels.HomeViewModel
 import com.capstone.designpatterntutorial.viewmodels.RecentsState
+import com.capstone.designpatterntutorial.viewmodels.SearchMode
 import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, val title: String, val icon: @Composable () -> Unit) {
@@ -72,6 +73,7 @@ fun HomeScreen(viewModel: HomeViewModel) {
     val favoritesState by viewModel.favoritesState.collectAsState()
     val recentsState by viewModel.recentsState.collectAsState()
     val searchState by viewModel.searchState.collectAsState()
+    val searchMode by viewModel.searchMode.collectAsState()
 
     var isSearchActive by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -188,7 +190,9 @@ fun HomeScreen(viewModel: HomeViewModel) {
                     onQueryChange = {
                         searchQuery = it
                         viewModel.onEvent(HomeEvent.Search(it))
-                    }
+                    },
+                    searchMode = searchMode,
+                    onSearchModeChange = { viewModel.onEvent(HomeEvent.SetSearchMode(it)) }
                 ) {
                     isSearchActive = false
                     searchQuery = ""

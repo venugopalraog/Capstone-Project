@@ -5,12 +5,14 @@ import android.content.ContentResolver
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.capstone.designpatterntutorial.BuildConfig
 import com.capstone.designpatterntutorial.database.DesignPatternContract
 import com.capstone.designpatterntutorial.model.converter.MainScreenConverter
 import com.capstone.designpatterntutorial.model.mainscreen.MainScreenData
 import com.capstone.designpatterntutorial.model.mainscreen.Pattern
 import com.capstone.designpatterntutorial.services.FavoriteDbService
 import com.capstone.designpatterntutorial.services.RecentDbService
+import com.google.ai.client.generativeai.GenerativeModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -41,6 +43,11 @@ sealed class SearchState {
     data class Error(val message: String) : SearchState()
 }
 
+enum class SearchMode {
+    DATABASE,
+    AI
+}
+
 sealed class HomeEvent {
     object LoadPatterns : HomeEvent()
     object LoadFavorites : HomeEvent()
@@ -48,6 +55,7 @@ sealed class HomeEvent {
     data class ToggleFavorite(val pattern: Pattern) : HomeEvent()
     data class AddRecent(val pattern: Pattern) : HomeEvent()
     data class Search(val query: String) : HomeEvent()
+    data class SetSearchMode(val mode: SearchMode) : HomeEvent()
 }
 
 class HomeViewModel @Inject constructor(
@@ -66,6 +74,21 @@ class HomeViewModel @Inject constructor(
 
     private val _searchState = MutableStateFlow<SearchState>(SearchState.Idle)
     val searchState: StateFlow<SearchState> = _searchState
+
+    private val _searchMode = MutableStateFlow(SearchMode.DATABASE)
+    val searchMode: StateFlow<SearchMode> = _searchMode
+
+    private val generativeModel: GenerativeModel by lazy {
+        try {
+            GenerativeModel(
+                modelName = "gemini-1.5-pro-latest",
+                apiKey = BuildConfig.GEMINI_API_KEY
+            )
+        } catch (e: Exception) {
+            // Handle model initialization failure
+            throw IllegalStateException("Failed to initialize GenerativeModel", e)
+        }
+    }
 
     fun onEvent(event: HomeEvent) {
         when (event) {
@@ -86,6 +109,9 @@ class HomeViewModel @Inject constructor(
             }
             is HomeEvent.Search -> {
                 search(event.query)
+            }
+            is HomeEvent.SetSearchMode -> {
+                _searchMode.value = event.mode
             }
         }
     }
@@ -140,37 +166,84 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _searchState.value = SearchState.Loading
             try {
-                val selection = "${DesignPatternContract.PatternEntry.COLUMN_NAME} LIKE ?"
-                val selectionArgs = arrayOf("%$query%")
-                val cursor = contentResolver.query(
-                    DesignPatternContract.PatternEntry.CONTENT_URI,
-                    null,
-                    selection,
-                    selectionArgs,
-                    null
-                )
-                val patterns = mutableListOf<Pattern>()
-                cursor?.use {
-                    while (it.moveToNext()) {
-                        val name = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_NAME))
-                        patterns.add(
-                            Pattern(
-                                id = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_ID)),
-                                categoryId = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_CATEGORY_ID)),
-                                name = name,
-                                summary = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_DESCRIPTION)),
-                                url = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_INTENT)),
-                                imageName = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_IMAGE_NAME)),
-                                isFavorite = false // We can improve this later
-                            )
-                        )
-                    }
+                val patterns = when (_searchMode.value) {
+                    SearchMode.DATABASE -> searchDatabase(query)
+                    SearchMode.AI -> searchWithAi(query)
                 }
                 _searchState.value = SearchState.Success(patterns)
             } catch (e: Exception) {
                 _searchState.value = SearchState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private fun searchDatabase(query: String): List<Pattern> {
+        val selection = "${DesignPatternContract.PatternEntry.COLUMN_NAME} LIKE ?"
+        val selectionArgs = arrayOf("%$query%")
+        val cursor = contentResolver.query(
+            DesignPatternContract.PatternEntry.CONTENT_URI,
+            null,
+            selection,
+            selectionArgs,
+            null
+        )
+        val patterns = mutableListOf<Pattern>()
+        cursor?.use {
+            while (it.moveToNext()) {
+                val name = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_NAME))
+                patterns.add(
+                    Pattern(
+                        id = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_ID)),
+                        categoryId = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_CATEGORY_ID)),
+                        name = name,
+                        summary = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_DESCRIPTION)),
+                        url = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_INTENT)),
+                        imageName = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_IMAGE_NAME)),
+                        isFavorite = false // We can improve this later
+                    )
+                )
+            }
+        }
+        return patterns
+    }
+
+    private suspend fun searchWithAi(query: String): List<Pattern> {
+        val allPatterns = getAllPatternsFromDatabase() // You need to implement this function
+        val prompt = "Given the following list of design patterns, which ones are most relevant to the query \"$query\"? List the most relevant pattern names, separated by commas.\n\n" +
+                allPatterns.joinToString("\n") { "- ${it.name}: ${it.summary}" }
+
+        val response = generativeModel.generateContent(prompt)
+        val patternNames = response.text?.split(",")?.map { it.trim() } ?: emptyList()
+
+        return allPatterns.filter { it.name in patternNames }
+    }
+
+    private fun getAllPatternsFromDatabase(): List<Pattern> {
+        val cursor = contentResolver.query(
+            DesignPatternContract.PatternEntry.CONTENT_URI,
+            null,
+            null,
+            null,
+            null
+        )
+        val patterns = mutableListOf<Pattern>()
+        cursor?.use {
+            while (it.moveToNext()) {
+                val name = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_NAME))
+                patterns.add(
+                    Pattern(
+                        id = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_ID)),
+                        categoryId = it.getInt(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_CATEGORY_ID)),
+                        name = name,
+                        summary = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_DESCRIPTION)),
+                        url = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_INTENT)),
+                        imageName = it.getString(it.getColumnIndexOrThrow(DesignPatternContract.PatternEntry.COLUMN_IMAGE_NAME)),
+                        isFavorite = false // We can improve this later
+                    )
+                )
+            }
+        }
+        return patterns
     }
 
     private fun loadPatterns() {
